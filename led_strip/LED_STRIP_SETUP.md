@@ -14,7 +14,7 @@ Home Assistant
     | Magic Home local integration
     | TCP port 5577
     v
-LEDnet/Magic Home controller at 10.156.199.29
+LEDnet/Magic Home controller at 10.21.225.29
     |
     v
 LED strip
@@ -32,7 +32,7 @@ Assistant:
 | User-facing device name | Germination Chamber Light |
 | Home Assistant entity | light.germination_chamber_germination_chamber_light |
 | Home Assistant area | germination_chamber |
-| Controller IP | 10.156.199.29 |
+| Controller IP | 10.21.225.29 |
 | Controller TCP port | 5577 |
 | Controller MAC | E8:CA:50:42:88:51 |
 | Manufacturer | Zengge |
@@ -96,12 +96,12 @@ After provisioning, the controller joins the destination network and listens
 for lighting commands on:
 
 ~~~text
-IP:   10.156.199.29
+IP:   10.21.225.29
 TCP:  5577
 ~~~
 
 The IP address is assigned by DHCP and can change. Home Assistant currently
-uses 10.156.199.29; reserve this address in the router or hotspot if that
+uses 10.21.225.29; reserve this address in the router or hotspot if that
 feature is available.
 
 ## Provisioning Without the Vendor App
@@ -244,7 +244,7 @@ The device is configured as:
 ~~~text
 Device:  Germination Chamber Light
 Entity:  light.germination_chamber_germination_chamber_light
-Host:    10.156.199.29
+Host:    10.21.225.29
 Port:    5577
 Area:    germination_chamber
 ~~~

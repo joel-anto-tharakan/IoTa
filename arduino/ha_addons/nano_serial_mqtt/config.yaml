@@ -1,5 +1,5 @@
 name: "Nano USB Sensor Gateway"
-version: "1.0.0"
+version: "1.1.0"
 slug: "nano_serial_mqtt"
 description: "Read a Nano 33 BLE Sense over USB serial and publish MQTT discovery sensors."
 arch:
@@ -11,5 +11,7 @@ services:
   - mqtt:need
 options:
   serial_port: "/dev/ttyACM0"
+  install_firmware: false
 schema:
   serial_port: "device(subsystem=tty)"
+  install_firmware: "bool"

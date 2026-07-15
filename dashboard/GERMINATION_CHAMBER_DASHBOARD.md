@@ -112,7 +112,7 @@ The dashboard uses the following entities discovered from the Home Assistant ent
 | Temperature | `sensor.nano_33_environment_sensor_nano_temperature` |
 | Humidity | `sensor.nano_33_environment_sensor_nano_humidity` |
 | Pressure | `sensor.nano_33_environment_sensor_nano_pressure` |
-| Ambient light | `sensor.nano_33_environment_sensor_nano_ambient_light` |
+| Illuminance | `sensor.chamber_arduino_illuminance` (displayed in `lx`, for example `1.18 lx`) |
 | Soil moisture, sensor 1 | `sensor.germcam_1_soil_moisture_2` |
 | Raw soil moisture, sensor 1 | `sensor.germcam_1_soil_raw_moisture_2` |
 

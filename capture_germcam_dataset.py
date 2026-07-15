@@ -7,10 +7,12 @@ from a Home Assistant automation or cron-like scheduler.
 It uses only Python's standard library:
   - MQTT v3.1.1 is implemented just far enough to subscribe to retained topics.
   - Images are downloaded with urllib.
+  - Arduino chamber readings are collected from their retained MQTT state
+    topic once per capture run.
 
 One-shot example:
   python3 /config/capture_germcam_dataset.py \
-    --mqtt-host 10.156.199.155 \
+    --mqtt-host homeassistant.local \
     --node germcam-1 \
     --node germcam-2 \
     --output-dir /media/germcam
@@ -349,6 +351,36 @@ def get_latest_mqtt_snapshot(args: argparse.Namespace, node: str) -> dict[str, A
     return snapshot
 
 
+def get_latest_environment_snapshot(args: argparse.Namespace) -> dict[str, Any]:
+    with MinimalMqttClient(
+        args.mqtt_host,
+        args.mqtt_port,
+        args.mqtt_user,
+        args.mqtt_password,
+        args.mqtt_timeout,
+    ) as client:
+        client.subscribe(args.environment_topic)
+        messages = client.collect(args.mqtt_wait)
+
+    message = messages.get(args.environment_topic, {})
+    value = message.get("value")
+    if not isinstance(value, dict):
+        raise RuntimeError(
+            f"No retained Arduino environment JSON found on {args.environment_topic}"
+        )
+
+    return {
+        "topic": args.environment_topic,
+        "retained": message.get("retained"),
+        "received_at": message.get("received_at"),
+        "temperature_c": value.get("temperature"),
+        "humidity_percent": value.get("humidity"),
+        "pressure_hpa": value.get("pressure"),
+        "illuminance_lux": value.get("illuminance"),
+        "mqtt_state": value,
+    }
+
+
 def infer_jpg_url(node: str, snapshot: dict[str, Any], fallback_template: str | None) -> str:
     jpg_url = snapshot.get("jpg_url")
     if isinstance(jpg_url, str) and jpg_url.startswith(("http://", "https://")):
@@ -392,7 +424,12 @@ def append_jsonl(path: Path, row: dict[str, Any]) -> None:
         handle.write(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n")
 
 
-def capture_node(args: argparse.Namespace, node: str, captured_at: datetime) -> dict[str, Any]:
+def capture_node(
+    args: argparse.Namespace,
+    node: str,
+    captured_at: datetime,
+    environment: dict[str, Any],
+) -> dict[str, Any]:
     snapshot = get_latest_mqtt_snapshot(args, node)
     jpg_url = infer_jpg_url(node, snapshot, args.fallback_jpg_url_template)
     image_bytes, http_headers = download_image(jpg_url, args.http_timeout)
@@ -419,6 +456,11 @@ def capture_node(args: argparse.Namespace, node: str, captured_at: datetime) -> 
         "stream_url": snapshot.get("stream_url"),
         "soil_raw": snapshot.get("soil_raw"),
         "soil_moisture_percent": snapshot.get("soil_moisture_percent"),
+        "temperature_c": environment.get("temperature_c"),
+        "humidity_percent": environment.get("humidity_percent"),
+        "pressure_hpa": environment.get("pressure_hpa"),
+        "illuminance_lux": environment.get("illuminance_lux"),
+        "environment": environment,
         "rssi": status.get("rssi"),
         "uptime_ms": status.get("uptime_ms"),
         "free_heap": status.get("free_heap"),
@@ -458,7 +500,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--mqtt-host",
-        default=os.environ.get("MQTT_HOST", "10.156.199.155"),
+        default=os.environ.get("MQTT_HOST", "core-mosquitto"),
         help="MQTT broker host.",
     )
     parser.add_argument(
@@ -473,6 +515,13 @@ def parse_args() -> argparse.Namespace:
         "--topic-template",
         default=os.environ.get("GERMCAM_TOPIC_TEMPLATE", "germination/{node}"),
         help="Base MQTT topic template. Use {node} as the placeholder.",
+    )
+    parser.add_argument(
+        "--environment-topic",
+        default=os.environ.get(
+            "GERMCAM_ENVIRONMENT_TOPIC", "germination/nano33-environment/state"
+        ),
+        help="Retained Arduino chamber environment MQTT state topic.",
     )
     parser.add_argument(
         "--mqtt-wait",
@@ -504,7 +553,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--led-ip",
-        default=os.environ.get("LED_IP", "10.156.199.29"),
+        default=os.environ.get("LED_IP", "10.21.225.29"),
         help="LED strip controller IP address.",
     )
     parser.add_argument(
@@ -562,14 +611,29 @@ def run_capture(args: argparse.Namespace) -> int:
     captured_at = datetime.now().astimezone()
     rows = []
     errors = []
+    warnings = []
+
+    try:
+        environment = get_latest_environment_snapshot(args)
+    except Exception as exc:
+        warning = {
+            "source": "arduino_environment",
+            "topic": args.environment_topic,
+            "error": str(exc),
+        }
+        warnings.append(warning)
+        environment = warning
+        print(f"WARNING collecting Arduino environment: {exc}", file=sys.stderr)
 
     for node in args.node:
         try:
-            row = capture_node(args, node, captured_at)
+            row = capture_node(args, node, captured_at, environment)
             rows.append(row)
             print(
                 f"captured {node}: {row['image_relative_path']} "
-                f"soil={row['soil_moisture_percent']} raw={row['soil_raw']}"
+                f"soil={row['soil_moisture_percent']} raw={row['soil_raw']} "
+                f"temperature={row['temperature_c']} humidity={row['humidity_percent']} "
+                f"pressure={row['pressure_hpa']} illuminance={row['illuminance_lux']}"
             )
         except Exception as exc:
             errors.append({"node": node, "error": str(exc)})
@@ -577,7 +641,7 @@ def run_capture(args: argparse.Namespace) -> int:
             if args.fail_fast:
                 break
 
-    print(json.dumps({"captures": rows, "errors": errors}, indent=2))
+    print(json.dumps({"captures": rows, "errors": errors, "warnings": warnings}, indent=2))
     if errors and not (args.allow_partial and rows):
         return 1
     return 0

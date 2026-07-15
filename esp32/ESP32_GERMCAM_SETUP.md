@@ -6,8 +6,8 @@ This folder is a local copy of the files used by Home Assistant to represent
 two ESP32-CAM devices, expose their MQTT camera and soil readings, and save a
 dataset sample every 30 minutes.
 
-The live Home Assistant configuration was checked over SSH on 11 July 2026.
-The confirmed host is `10.156.199.155`, and `/config` is a symbolic link to
+The live Home Assistant configuration was checked over SSH on 15 July 2026.
+The confirmed host is `10.21.225.155`, and `/config` is a symbolic link to
 `/homeassistant`.
 
 The ESP32 SD-card configuration is intentionally not included. Use the root
@@ -20,25 +20,26 @@ untracked.
 ESP32-CAM 1 + soil sensor -- MQTT --> Mosquitto --\
                                                     > capture script
 ESP32-CAM 2 + soil sensor -- MQTT --> Mosquitto --/        |
+Arduino environment sensors --- MQTT ---------------------/
                                                            v
-Magic Home LED at 10.156.199.29 -----------------> /media/germcam
+Magic Home LED at 10.21.225.29 -----------------> /media/germcam
 ```
 
 The ESP32 devices publish current measurements to MQTT. Home Assistant does
 not cause those publications. Its automation runs at minute `00` and `30` of
-every hour and starts a one-shot script that collects MQTT values, downloads
-one image from each available camera, queries the LED controller, and saves
-the combined record.
+every hour and starts a one-shot script that collects the ESP32 and Arduino
+MQTT values, downloads one image from each available camera, queries the LED
+controller, and saves the combined record.
 
 ## Confirmed Addresses
 
 | Component | Address |
 | --- | --- |
 | Home Assistant | `http://homeassistant.local:8123/` |
-| Raspberry Pi | `10.156.199.155` |
-| MQTT broker for LAN devices | `10.156.199.155:1883` or `homeassistant.local:1883` |
-| ESP32-CAM 1 last observed address | `10.156.199.186` |
-| LED controller | `10.156.199.29:5577` |
+| Raspberry Pi | `10.21.225.155` |
+| MQTT broker for LAN devices | `10.21.225.155:1883` or `homeassistant.local:1883` |
+| ESP32-CAM 1 last observed address | `10.21.225.186` |
+| LED controller | `10.21.225.29:5577` |
 | LED MAC | `E8:CA:50:42:88:51` |
 | LED model | `AK001-ZJ21412` |
 
@@ -66,10 +67,10 @@ seconds. That is independent of the 30-minute dataset capture schedule.
 Useful MQTT checks:
 
 ```sh
-mosquitto_sub -h 10.156.199.155 -p 1883 -u MQTT_USER -P MQTT_PASSWORD \
+mosquitto_sub -h homeassistant.local -p 1883 -u MQTT_USER -P MQTT_PASSWORD \
   -t 'germination/germcam-1/#' -v
 
-mosquitto_sub -h 10.156.199.155 -p 1883 -u MQTT_USER -P MQTT_PASSWORD \
+mosquitto_sub -h homeassistant.local -p 1883 -u MQTT_USER -P MQTT_PASSWORD \
   -t 'germination/+/soil_raw' -v \
   -t 'germination/+/soil_moisture_percent' -v
 ```
@@ -171,13 +172,16 @@ the expected JPEG URL during recent tests.
 
 ### `capture_germcam_dataset.py`
 
-For each node, the script:
+For each run, the script first reads the retained Arduino environment state
+from `germination/nano33-environment/state`. It then performs the following for
+each camera node:
 
 1. Subscribes to `germination/<node>/#`.
 2. Collects the latest MQTT camera and soil values.
 3. Downloads the JPEG URL published by the ESP32.
 4. Queries the LED controller directly over TCP port `5577`.
-5. Saves the image and appends a JSON Lines metadata record.
+5. Saves the image and appends a JSON Lines metadata record containing the
+   matching temperature, humidity, pressure, and illuminance readings.
 
 The LED query is implemented inside this script. No separate LED utility is
 needed by the active capture process.
@@ -196,8 +200,9 @@ needed by the active capture process.
 ```
 
 Metadata can include the capture timestamp, image path and size, soil raw
-value, moisture percentage, RSSI, uptime, free heap, camera status, MQTT
-status object, and direct LED state. The LED data can include state,
+value, moisture percentage, temperature, humidity, air pressure, illuminance,
+RSSI, uptime, free heap, camera status, MQTT status objects, and direct LED
+state. The LED data can include state,
 brightness estimate, RGB colour, effect, effect speed, white level, raw reply,
 IP, MAC and model.
 
@@ -206,7 +211,7 @@ IP, MAC and model.
 Connect to Home Assistant:
 
 ```sh
-ssh root@10.156.199.155
+ssh ha
 ```
 
 Validate and inspect Home Assistant:
@@ -250,13 +255,13 @@ python3 -m py_compile /config/capture_germcam_dataset.py
 Copy updated local files back to Home Assistant from this folder:
 
 ```powershell
-scp ..\capture_germcam_dataset.py root@10.156.199.155:/config/
-scp ..\run_germcam_capture.sh root@10.156.199.155:/config/scripts/
-scp .\packages\esp32_camera_1.yaml root@10.156.199.155:/config/packages/
-scp .\packages\esp32_camera_2.yaml root@10.156.199.155:/config/packages/
-scp .\packages\esp32_soil_sensor_1.yaml root@10.156.199.155:/config/packages/
-scp .\packages\esp32_soil_sensor_2.yaml root@10.156.199.155:/config/packages/
-scp ..\germcam_dataset_capture.yaml root@10.156.199.155:/config/packages/
+scp ..\capture_germcam_dataset.py ha:/config/
+scp ..\config\scripts\run_germcam_capture.sh ha:/config/scripts/
+scp .\packages\esp32_camera_1.yaml ha:/config/packages/
+scp .\packages\esp32_camera_2.yaml ha:/config/packages/
+scp .\packages\esp32_soil_sensor_1.yaml ha:/config/packages/
+scp .\packages\esp32_soil_sensor_2.yaml ha:/config/packages/
+scp ..\germcam_dataset_capture.yaml ha:/config/packages/
 ```
 
 Run `ha core check` before restarting Home Assistant after any YAML change.

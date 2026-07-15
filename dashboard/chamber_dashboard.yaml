@@ -40,9 +40,9 @@ views:
                 color: cyan
 
               - type: tile
-                entity: sensor.nano_33_environment_sensor_nano_ambient_light
-                name: Ambient Light
-                icon: mdi:brightness-auto
+                entity: sensor.chamber_arduino_illuminance
+                name: Illuminance
+                icon: mdi:brightness-6
                 color: yellow
 
               - type: gauge

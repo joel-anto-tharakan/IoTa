@@ -20,7 +20,7 @@ mkdir -p "${OUTPUT_DIR}"
 {
   echo "=== $(date '+%Y-%m-%dT%H:%M:%S%z') germcam capture start ==="
   python3 /config/capture_germcam_dataset.py \
-    --mqtt-host 10.156.199.155 \
+    --mqtt-host core-mosquitto \
     --node germcam-1 \
     --node germcam-2 \
     --output-dir "${OUTPUT_DIR}" \

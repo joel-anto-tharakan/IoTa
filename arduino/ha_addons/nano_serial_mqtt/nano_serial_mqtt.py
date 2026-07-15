@@ -25,7 +25,14 @@ def parse_reading(line: str) -> dict:
         "temperature": float(fields["T"]),
         "humidity": float(fields["rH"]),
         "pressure": float(fields["Pressure"]),
-        "light": int(fields["Light"]),
+        "light_clear": int(fields["LightClear"]),
+        "light_red": int(fields["LightRed"]),
+        "light_green": int(fields["LightGreen"]),
+        "light_blue": int(fields["LightBlue"]),
+        "illuminance": float(fields["Lux"]),
+        "light_saturated": fields["LightSaturated"] == "1",
+        "light_gain": int(fields["LightGain"]),
+        "light_integration_ms": float(fields["LightIntegrationMs"]),
     }
 
 
@@ -52,18 +59,40 @@ def publish_discovery(client: mqtt.Client) -> None:
             "unit_of_measurement": "hPa",
             "device_class": "atmospheric_pressure",
         },
+        "illuminance": {
+            "name": "Illuminance",
+            "unit_of_measurement": "lx",
+            "device_class": "illuminance",
+        },
         "light": {
-            "name": "Ambient Light",
+            "name": "Light Clear Raw",
+            "value_key": "light_clear",
             "icon": "mdi:brightness-6",
+        },
+        "light_red": {"name": "Light Red Raw", "icon": "mdi:palette"},
+        "light_green": {"name": "Light Green Raw", "icon": "mdi:palette"},
+        "light_blue": {"name": "Light Blue Raw", "icon": "mdi:palette"},
+        "light_gain": {
+            "name": "Light Gain",
+            "icon": "mdi:amplifier",
+            "entity_category": "diagnostic",
+        },
+        "light_integration_ms": {
+            "name": "Light Integration Time",
+            "unit_of_measurement": "ms",
+            "icon": "mdi:timer-outline",
+            "entity_category": "diagnostic",
         },
     }
 
     for metric, details in sensors.items():
+        details = details.copy()
+        value_key = details.pop("value_key", metric)
         config = {
             **details,
             "unique_id": f"nano33_usb_{metric}",
             "state_topic": MQTT_STATE_TOPIC,
-            "value_template": "{{ value_json." + metric + " }}",
+            "value_template": "{{ value_json." + value_key + " }}",
             "availability_topic": MQTT_AVAILABILITY_TOPIC,
             "payload_available": "online",
             "payload_not_available": "offline",
@@ -72,6 +101,23 @@ def publish_discovery(client: mqtt.Client) -> None:
         }
         topic = f"{DISCOVERY_PREFIX}/sensor/nano33_usb/{metric}/config"
         client.publish(topic, json.dumps(config), qos=1, retain=True)
+
+    saturation_config = {
+        "name": "Light Saturated",
+        "unique_id": "nano33_usb_light_saturated",
+        "state_topic": MQTT_STATE_TOPIC,
+        "value_template": "{{ 'ON' if value_json.light_saturated else 'OFF' }}",
+        "payload_on": "ON",
+        "payload_off": "OFF",
+        "availability_topic": MQTT_AVAILABILITY_TOPIC,
+        "payload_available": "online",
+        "payload_not_available": "offline",
+        "device_class": "problem",
+        "entity_category": "diagnostic",
+        "device": device,
+    }
+    topic = f"{DISCOVERY_PREFIX}/binary_sensor/nano33_usb/light_saturated/config"
+    client.publish(topic, json.dumps(saturation_config), qos=1, retain=True)
 
 
 def create_mqtt_client() -> mqtt.Client:

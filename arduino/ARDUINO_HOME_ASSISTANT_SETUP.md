@@ -9,8 +9,15 @@ publishes the readings through Home Assistant's configured MQTT service.
 
 Home Assistant creates one device named `Arduino Sensor` with these entities:
 
-- `Ambient Light`
 - `Humidity`
+- `Illuminance`
+- `Light Blue Raw`
+- `Light Clear Raw`
+- `Light Green Raw`
+- `Light Red Raw`
+- `Light Saturated` (diagnostic)
+- `Light Gain` (diagnostic)
+- `Light Integration Time` (diagnostic)
 - `Online`
 - `Pressure`
 - `Temperature`
@@ -50,6 +57,7 @@ The Nano reads its onboard I2C sensors on bus 1 using `SCL=15` and `SDA=14`:
 | `ha_addons/nano_serial_mqtt/Dockerfile` | App image with Python, `pyserial`, and `paho-mqtt`. |
 | `ha_addons/nano_serial_mqtt/run.sh` | Starts the gateway with Home Assistant MQTT service details. |
 | `ha_addons/nano_serial_mqtt/nano_serial_mqtt.py` | Serial reader, MQTT publisher, and MQTT discovery publisher. |
+| `ha_addons/nano_serial_mqtt/nano_main.py` | Firmware copy bundled into the app for installation on the Nano. |
 | `../dashboard/germination_chamber.yaml` | Chamber helpers and the live Arduino connectivity template. |
 | `../esp32/packages/esp32_camera_1.yaml` | `ESP32 Camera 1` Home Assistant package. |
 | `../esp32/packages/esp32_soil_sensor_1.yaml` | `ESP32 Soil Sensor 1` Home Assistant package. |
@@ -66,13 +74,28 @@ The firmware discards the first LPS22H pressure reading after startup, then
 prints this format every 30 seconds:
 
 ```text
-rH:71.99,T:20.05,Pressure:1021.51,Light:87
+rH:59.22,T:21.30,Pressure:1031.27,LightClear:21,LightRed:12,LightGreen:6,LightBlue:6,Lux:1.18,LightSaturated:0,LightGain:4,LightIntegrationMs:103.0
+```
+
+The APDS9960 light configuration is fixed at 4x gain and approximately 103 ms
+integration time. The firmware captures all four 16-bit RGBC channels and
+calculates estimated illuminance from the RGB channels. It marks a reading as
+saturated when any channel reaches 37,800 counts.
+
+`LUX_CALIBRATION_FACTOR` in both firmware copies defaults to `1.0`. The
+`Illuminance` entity is therefore an estimate until this multiplier is
+calibrated against a reference lux meter with the board in its final mounted
+position. Keep these two files synchronized when changing firmware:
+
+```text
+usb_mqtt/nano_main.py
+ha_addons/nano_serial_mqtt/nano_main.py
 ```
 
 ## Home Assistant App
 
-The local app is named `Nano USB Sensor Gateway` and has the slug
-`local_nano_serial_mqtt`.
+The local app is named `Nano USB Sensor Gateway`, has the slug
+`local_nano_serial_mqtt`, and is currently version `1.1.0`.
 
 Its source is deployed to Home Assistant at:
 
@@ -110,7 +133,7 @@ availability topic based on the USB serial connection:
 - Gateway loses its MQTT connection unexpectedly: its MQTT last will publishes
   `offline`.
 
-All four measurement entities subscribe to this topic. When the Nano is
+All MQTT measurement entities subscribe to this topic. When the Nano is
 unplugged they become `unavailable`, instead of retaining stale readings. When
 the cable is reconnected, the gateway reopens the port, publishes `online`, and
 resumes readings.
@@ -123,7 +146,7 @@ temperature entity and exposes:
 binary_sensor.arduino_connected
 ```
 
-The MQTT discovery sensors remain the source of the four Nano measurements.
+The MQTT discovery sensors remain the source of the Nano measurements.
 
 ## ESP32 Device Packages
 
@@ -164,23 +187,41 @@ ssh ha
 
 ### Update Nano Firmware
 
-Stop the gateway first so it releases the serial port:
+The preferred update method uses the firmware copy bundled into gateway
+version 1.1.0. In **Settings > Apps > Nano USB Sensor Gateway > Configuration**,
+enable `Install firmware`, restart the app once, and confirm this log entry:
+
+```text
+Installing bundled Nano firmware on /dev/ttyACM0
+```
+
+Immediately disable `Install firmware` afterward. It is a one-time maintenance
+switch and should remain off during normal operation.
+
+After modifying the firmware locally, update the bundled copy and deploy the
+app source:
+
+```powershell
+Copy-Item arduino/usb_mqtt/nano_main.py arduino/ha_addons/nano_serial_mqtt/nano_main.py
+```
+
+```bash
+scp arduino/ha_addons/nano_serial_mqtt/Dockerfile ha:/addons/nano_serial_mqtt/
+scp arduino/ha_addons/nano_serial_mqtt/config.yaml ha:/addons/nano_serial_mqtt/
+scp arduino/ha_addons/nano_serial_mqtt/run.sh ha:/addons/nano_serial_mqtt/
+scp arduino/ha_addons/nano_serial_mqtt/nano_main.py ha:/addons/nano_serial_mqtt/
+scp arduino/ha_addons/nano_serial_mqtt/nano_serial_mqtt.py ha:/addons/nano_serial_mqtt/
+ssh ha "ha store reload"
+ssh ha "ha apps update local_nano_serial_mqtt"
+```
+
+Direct `mpremote` installation remains possible when it is installed in the
+terminal. Stop the gateway first so it releases the serial port:
 
 ```bash
 ssh ha "ha apps stop local_nano_serial_mqtt"
-```
-
-Upload the firmware and install it on the Nano:
-
-```bash
-scp arduino/usb_mqtt/nano_main.py ha:/config/nano_main.py
 ssh ha "mpremote connect /dev/ttyACM0 cp /config/nano_main.py :main.py"
 ssh ha "mpremote connect /dev/ttyACM0 reset"
-```
-
-Start the gateway again:
-
-```bash
 ssh ha "ha apps start local_nano_serial_mqtt"
 ```
 
@@ -230,8 +271,9 @@ ssh ha "ha apps logs local_nano_serial_mqtt"
 ssh ha "grep -n 'germination_chamber_arduino_connected' /config/.storage/core.entity_registry"
 ```
 
-With Home Assistant running, unplugging the Nano should set `Online` to off and
-all four measurements to `unavailable`. Reconnecting it should restore them.
+With Home Assistant running, unplugging the Nano should set the connectivity
+indicator to off and all MQTT measurements to `unavailable`. Reconnecting it
+should restore them.
 
 ## Troubleshooting
 
@@ -243,6 +285,8 @@ all four measurements to `unavailable`. Reconnecting it should restore them.
 | ESP32 values are grouped together | Check that each package has its own `device.identifiers`. |
 | Measurements retain stale values after unplugging | Confirm the gateway logs a serial error and publishes `offline`; rebuild it if the local source was changed. |
 | Gateway cannot start while Nano is unplugged | Plug in the Nano first. The app configuration requires `serial_port` to reference a currently present TTY device. |
+| Illuminance is inaccurate | Mount the board permanently, compare it with a reference meter, and adjust `LUX_CALIBRATION_FACTOR` in both firmware copies. |
+| `Light Saturated` is on | Reduce APDS9960 gain or integration time and update the matching metadata and saturation threshold. |
 
 The gateway currently emits a Paho MQTT callback API v1 deprecation warning.
 This warning is cosmetic and does not prevent publishing.
