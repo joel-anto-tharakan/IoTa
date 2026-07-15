@@ -1,0 +1,70 @@
+input_boolean:
+  seed_a1: { name: Seed A1, icon: mdi:seed-outline }
+  seed_a2: { name: Seed A2, icon: mdi:seed-outline }
+  seed_a3: { name: Seed A3, icon: mdi:seed-outline }
+  seed_a4: { name: Seed A4, icon: mdi:seed-outline }
+  seed_a5: { name: Seed A5, icon: mdi:seed-outline }
+  seed_a6: { name: Seed A6, icon: mdi:seed-outline }
+
+  seed_b1: { name: Seed B1, icon: mdi:seed-outline }
+  seed_b2: { name: Seed B2, icon: mdi:seed-outline }
+  seed_b3: { name: Seed B3, icon: mdi:seed-outline }
+  seed_b4: { name: Seed B4, icon: mdi:seed-outline }
+  seed_b5: { name: Seed B5, icon: mdi:seed-outline }
+  seed_b6: { name: Seed B6, icon: mdi:seed-outline }
+
+  seed_c1: { name: Seed C1, icon: mdi:seed-outline }
+  seed_c2: { name: Seed C2, icon: mdi:seed-outline }
+  seed_c3: { name: Seed C3, icon: mdi:seed-outline }
+  seed_c4: { name: Seed C4, icon: mdi:seed-outline }
+  seed_c5: { name: Seed C5, icon: mdi:seed-outline }
+  seed_c6: { name: Seed C6, icon: mdi:seed-outline }
+
+  seed_d1: { name: Seed D1, icon: mdi:seed-outline }
+  seed_d2: { name: Seed D2, icon: mdi:seed-outline }
+  seed_d3: { name: Seed D3, icon: mdi:seed-outline }
+  seed_d4: { name: Seed D4, icon: mdi:seed-outline }
+  seed_d5: { name: Seed D5, icon: mdi:seed-outline }
+  seed_d6: { name: Seed D6, icon: mdi:seed-outline }
+
+template:
+  - sensor:
+      - name: Germinated Seeds
+        unique_id: germinated_seed_count
+        icon: mdi:sprout
+        unit_of_measurement: seeds
+        state_class: measurement
+        state: >
+          {{ expand(
+            'input_boolean.seed_a1', 'input_boolean.seed_a2',
+            'input_boolean.seed_a3', 'input_boolean.seed_a4',
+            'input_boolean.seed_a5', 'input_boolean.seed_a6',
+            'input_boolean.seed_b1', 'input_boolean.seed_b2',
+            'input_boolean.seed_b3', 'input_boolean.seed_b4',
+            'input_boolean.seed_b5', 'input_boolean.seed_b6',
+            'input_boolean.seed_c1', 'input_boolean.seed_c2',
+            'input_boolean.seed_c3', 'input_boolean.seed_c4',
+            'input_boolean.seed_c5', 'input_boolean.seed_c6',
+            'input_boolean.seed_d1', 'input_boolean.seed_d2',
+            'input_boolean.seed_d3', 'input_boolean.seed_d4',
+            'input_boolean.seed_d5', 'input_boolean.seed_d6'
+          ) | selectattr('state', 'eq', 'on') | list | count }}
+
+  - binary_sensor:
+      - name: Arduino Connected
+        unique_id: germination_chamber_arduino_connected
+        device_class: connectivity
+        state: >
+          {% set reading = states.sensor.nano_33_environment_sensor_nano_temperature %}
+          {{
+            reading is not none
+            and reading.state not in ['unknown', 'unavailable']
+            and (as_timestamp(now()) - as_timestamp(reading.last_updated)) < 180
+          }}
+
+      - name: LED Strip Connected
+        unique_id: germination_chamber_led_strip_connected
+        device_class: connectivity
+        state: >
+          {{ states('light.germination_chamber_germination_chamber_light')
+             not in ['unknown', 'unavailable'] }}

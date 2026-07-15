@@ -1,0 +1,75 @@
+# Logical camera device for the ESP32-CAM that publishes as germcam-1.
+
+mqtt:
+  binary_sensor:
+    - name: "ESP32 Camera 1 Online"
+      unique_id: germcam_1_camera_online
+      state_topic: "germination/germcam-1/availability"
+      payload_on: "online"
+      payload_off: "offline"
+      device_class: connectivity
+      device:
+        identifiers: ["esp32-camera-1"]
+        name: "ESP32 Camera 1"
+        manufacturer: "Mini Germination Chamber"
+        model: "ESP32-CAM"
+
+  sensor:
+    - name: "ESP32 Camera 1 RSSI"
+      unique_id: germcam_1_camera_rssi
+      state_topic: "germination/germcam-1/status"
+      value_template: "{{ value_json.rssi }}"
+      unit_of_measurement: "dBm"
+      device_class: signal_strength
+      state_class: measurement
+      availability_topic: "germination/germcam-1/availability"
+      payload_available: "online"
+      payload_not_available: "offline"
+      device:
+        identifiers: ["esp32-camera-1"]
+
+    - name: "ESP32 Camera 1 Uptime"
+      unique_id: germcam_1_camera_uptime_seconds
+      state_topic: "germination/germcam-1/status"
+      value_template: "{{ (value_json.uptime_ms / 1000) | round(0) }}"
+      unit_of_measurement: "s"
+      device_class: duration
+      state_class: total_increasing
+      availability_topic: "germination/germcam-1/availability"
+      payload_available: "online"
+      payload_not_available: "offline"
+      device:
+        identifiers: ["esp32-camera-1"]
+
+    - name: "ESP32 Camera 1 Free Heap"
+      unique_id: germcam_1_camera_free_heap
+      state_topic: "germination/germcam-1/status"
+      value_template: "{{ value_json.free_heap }}"
+      unit_of_measurement: "B"
+      device_class: data_size
+      state_class: measurement
+      availability_topic: "germination/germcam-1/availability"
+      payload_available: "online"
+      payload_not_available: "offline"
+      device:
+        identifiers: ["esp32-camera-1"]
+
+    - name: "ESP32 Camera 1 JPEG URL"
+      unique_id: germcam_1_camera_jpeg_url
+      state_topic: "germination/germcam-1/jpg_url"
+      icon: "mdi:image"
+      availability_topic: "germination/germcam-1/availability"
+      payload_available: "online"
+      payload_not_available: "offline"
+      device:
+        identifiers: ["esp32-camera-1"]
+
+    - name: "ESP32 Camera 1 Stream URL"
+      unique_id: germcam_1_camera_stream_url
+      state_topic: "germination/germcam-1/stream_url"
+      icon: "mdi:video"
+      availability_topic: "germination/germcam-1/availability"
+      payload_available: "online"
+      payload_not_available: "offline"
+      device:
+        identifiers: ["esp32-camera-1"]

@@ -1,0 +1,211 @@
+views:
+  - title: Chamber
+    path: chamber
+    icon: mdi:greenhouse
+    type: panel
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: heading
+            heading: Germination Chamber
+            heading_style: title
+            icon: mdi:greenhouse
+
+          - type: grid
+            columns: 6
+            square: false
+            cards:
+              - type: tile
+                entity: sensor.germinated_seeds
+                name: Germinated / 24
+                icon: mdi:sprout
+                color: green
+
+              - type: tile
+                entity: sensor.nano_33_environment_sensor_nano_temperature
+                name: Temperature
+                icon: mdi:thermometer
+                color: deep-orange
+
+              - type: tile
+                entity: sensor.nano_33_environment_sensor_nano_humidity
+                name: Humidity
+                icon: mdi:water-percent
+                color: blue
+
+              - type: tile
+                entity: sensor.nano_33_environment_sensor_nano_pressure
+                name: Air pressure
+                icon: mdi:gauge
+                color: cyan
+
+              - type: tile
+                entity: sensor.nano_33_environment_sensor_nano_ambient_light
+                name: Ambient Light
+                icon: mdi:brightness-auto
+                color: yellow
+
+              - type: gauge
+                entity: sensor.germcam_1_soil_moisture_2
+                name: Soil moisture
+                min: 0
+                max: 100
+                needle: true
+                severity:
+                  red: 0
+                  yellow: 40
+                  green: 60
+
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: heading
+                    heading: Seed tray
+                    heading_style: subtitle
+                    icon: mdi:grid
+
+                  - type: markdown
+                    content: "**Future vision automation will update each position.**"
+
+                  - type: grid
+                    columns: 6
+                    square: false
+                    cards:
+                      - { type: tile, entity: input_boolean.seed_a1, name: A1, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+                      - { type: tile, entity: input_boolean.seed_a2, name: A2, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+                      - { type: tile, entity: input_boolean.seed_a3, name: A3, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+                      - { type: tile, entity: input_boolean.seed_a4, name: A4, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+                      - { type: tile, entity: input_boolean.seed_a5, name: A5, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+                      - { type: tile, entity: input_boolean.seed_a6, name: A6, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+
+                      - { type: tile, entity: input_boolean.seed_b1, name: B1, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+                      - { type: tile, entity: input_boolean.seed_b2, name: B2, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+                      - { type: tile, entity: input_boolean.seed_b3, name: B3, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+                      - { type: tile, entity: input_boolean.seed_b4, name: B4, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+                      - { type: tile, entity: input_boolean.seed_b5, name: B5, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+                      - { type: tile, entity: input_boolean.seed_b6, name: B6, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+
+                      - { type: tile, entity: input_boolean.seed_c1, name: C1, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+                      - { type: tile, entity: input_boolean.seed_c2, name: C2, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+                      - { type: tile, entity: input_boolean.seed_c3, name: C3, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+                      - { type: tile, entity: input_boolean.seed_c4, name: C4, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+                      - { type: tile, entity: input_boolean.seed_c5, name: C5, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+                      - { type: tile, entity: input_boolean.seed_c6, name: C6, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+
+                      - { type: tile, entity: input_boolean.seed_d1, name: D1, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+                      - { type: tile, entity: input_boolean.seed_d2, name: D2, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+                      - { type: tile, entity: input_boolean.seed_d3, name: D3, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+                      - { type: tile, entity: input_boolean.seed_d4, name: D4, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+                      - { type: tile, entity: input_boolean.seed_d5, name: D5, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+                      - { type: tile, entity: input_boolean.seed_d6, name: D6, icon: mdi:seed-outline, color: green, vertical: true, hide_state: true, tap_action: { action: none }, icon_tap_action: { action: none } }
+
+              - type: vertical-stack
+                cards:
+                  - type: heading
+                    heading: Chamber controls
+                    heading_style: subtitle
+                    icon: mdi:tune
+
+                  - type: tile
+                    entity: light.germination_chamber_germination_chamber_light
+                    name: Grow light
+                    icon: mdi:lightbulb
+                    features:
+                      - type: light-brightness
+
+                  - type: grid
+                    columns: 3
+                    square: false
+                    cards:
+                      - type: tile
+                        entity: binary_sensor.germcam_1_soil_sensor_germcam_1_soil_sensor_online
+                        name: Soil sensor 1
+                        icon: mdi:connection
+
+                      - type: tile
+                        entity: binary_sensor.esp32_soil_sensor_2_esp32_soil_sensor_2_online
+                        name: Soil sensor 2
+                        icon: mdi:connection
+
+                      - type: tile
+                        entity: binary_sensor.germcam_1_camera_germcam_1_camera_online
+                        name: Camera 1
+                        icon: mdi:camera-wireless
+
+                      - type: tile
+                        entity: binary_sensor.esp32_camera_2_esp32_camera_2_online
+                        name: Camera 2
+                        icon: mdi:camera-wireless
+
+                      - type: tile
+                        entity: binary_sensor.arduino_connected
+                        name: Arduino
+                        icon: mdi:developer-board
+
+                      - type: tile
+                        entity: binary_sensor.led_strip_connected
+                        name: LED strip
+                        icon: mdi:led-strip-variant
+
+          - type: heading
+            heading: Live cameras
+            heading_style: subtitle
+            icon: mdi:cctv
+
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: picture-entity
+                entity: camera.germcam_1_live
+                name: Camera 1 live
+                camera_view: live
+                show_state: false
+
+              - type: picture-entity
+                entity: camera.germcam_2_live
+                name: Camera 2 live (pending second ESP32-CAM)
+                camera_view: live
+                show_state: false
+
+          - type: heading
+            heading: Trends
+            heading_style: subtitle
+            icon: mdi:chart-timeline-variant
+
+          - type: grid
+            columns: 4
+            square: false
+            cards:
+              - type: history-graph
+                title: Temperature
+                hours_to_show: 72
+                entities:
+                  - entity: sensor.nano_33_environment_sensor_nano_temperature
+                    name: Chamber temperature
+
+              - type: history-graph
+                title: Humidity & soil moisture
+                hours_to_show: 72
+                entities:
+                  - entity: sensor.nano_33_environment_sensor_nano_humidity
+                    name: Air humidity
+                  - entity: sensor.germcam_1_soil_moisture_2
+                    name: Soil moisture
+
+              - type: history-graph
+                title: Air pressure
+                hours_to_show: 72
+                entities:
+                  - entity: sensor.nano_33_environment_sensor_nano_pressure
+                    name: Pressure
+
+              - type: history-graph
+                title: Germination progress
+                hours_to_show: 168
+                entities:
+                  - entity: sensor.germinated_seeds
+                    name: Germinated seeds

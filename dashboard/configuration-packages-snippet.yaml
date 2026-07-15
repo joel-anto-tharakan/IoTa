@@ -1,0 +1,4 @@
+# Add this block to /config/configuration.yaml only if package loading is absent.
+# The target Home Assistant installation already contains this configuration.
+homeassistant:
+  packages: !include_dir_named packages

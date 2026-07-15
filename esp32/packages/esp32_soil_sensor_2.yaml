@@ -1,0 +1,40 @@
+# Logical soil-moisture device connected to ESP32 camera 2.
+
+mqtt:
+  binary_sensor:
+    - name: "ESP32 Soil Sensor 2 Online"
+      unique_id: germcam_2_soil_sensor_online
+      state_topic: "germination/germcam-2/availability"
+      payload_on: "online"
+      payload_off: "offline"
+      device_class: connectivity
+      device:
+        identifiers: ["esp32-soil-sensor-2"]
+        name: "ESP32 Soil Sensor 2"
+        manufacturer: "Mini Germination Chamber"
+        model: "Capacitive Soil Moisture Sensor"
+
+  sensor:
+    - name: "ESP32 Soil Sensor 2 Raw Moisture"
+      unique_id: germcam_2_soil_sensor_raw_moisture
+      state_topic: "germination/germcam-2/soil_raw"
+      unit_of_measurement: "ADC"
+      state_class: measurement
+      availability_topic: "germination/germcam-2/availability"
+      payload_available: "online"
+      payload_not_available: "offline"
+      device:
+        identifiers: ["esp32-soil-sensor-2"]
+
+    - name: "ESP32 Soil Sensor 2 Moisture"
+      unique_id: germcam_2_soil_sensor_moisture_percent
+      state_topic: "germination/germcam-2/soil_moisture_percent"
+      unit_of_measurement: "%"
+      device_class: moisture
+      icon: "mdi:water-percent"
+      state_class: measurement
+      availability_topic: "germination/germcam-2/availability"
+      payload_available: "online"
+      payload_not_available: "offline"
+      device:
+        identifiers: ["esp32-soil-sensor-2"]

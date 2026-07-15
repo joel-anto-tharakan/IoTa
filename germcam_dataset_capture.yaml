@@ -1,0 +1,12 @@
+shell_command:
+  capture_germcam_dataset: /bin/sh /config/scripts/run_germcam_capture.sh
+
+automation:
+  - id: germcam_dataset_capture_every_30_minutes
+    alias: Germcam dataset capture every 30 minutes
+    mode: single
+    trigger:
+      - platform: time_pattern
+        minutes: "/30"
+    action:
+      - service: shell_command.capture_germcam_dataset
